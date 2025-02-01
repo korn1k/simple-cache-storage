@@ -46,10 +46,10 @@ exit - Close the client
 
 ## Architecture
 
-Protocol: gRPC with Protocol Buffers
-Server: Single-threaded in-memory storage with TTL support
-Client: Interactive CLI with persistent connection
-Data Model: Key-value pairs with optional expiration
+- Protocol: gRPC with Protocol Buffers
+- Server: Single-threaded in-memory storage with TTL support
+- Client: Interactive CLI with persistent connection
+- Data Model: Key-value pairs with optional expiration
 
 ## Example
 
