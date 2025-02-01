@@ -35,14 +35,14 @@ In a separate terminal, start the client:
 ## Usage
 
 The client supports the following commands:
-
+```
 put <key> <value> [ttl] - Store a value with optional TTL in milliseconds
 get <key> - Retrieve a value
 has <key> - Check if key exists
 delete <key> - Remove a key-value pair
 help - Show available commands
 exit - Close the client
-Example:
+```
 
 ## Architecture
 
