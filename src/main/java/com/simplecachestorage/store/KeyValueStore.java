@@ -16,11 +16,15 @@ public class KeyValueStore {
         if (entry != null && !entry.isExpired()) {
             return entry.getValue();
         }
-        storage.remove(key);
         return null;
     }
 
     public boolean delete(String key) {
-        return storage.remove(key) != null;
+        try {
+            KeyValueEntry result = storage.remove(key);
+            return result != null;
+        } catch (NullPointerException e) {
+            return false;
+        }
     }
 }

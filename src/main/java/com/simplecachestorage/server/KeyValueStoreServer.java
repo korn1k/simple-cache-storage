@@ -1,13 +1,14 @@
 package com.simplecachestorage.server;
 
+import com.simplecachestorage.DeleteRequest;
+import com.simplecachestorage.DeleteResponse;
+import com.simplecachestorage.GetRequest;
+import com.simplecachestorage.GetResponse;
 import com.simplecachestorage.KeyValueStoreGrpc;
 import com.simplecachestorage.PutRequest;
 import com.simplecachestorage.PutResponse;
-import com.simplecachestorage.GetRequest;
-import com.simplecachestorage.GetResponse;
-import com.simplecachestorage.DeleteRequest;
-import com.simplecachestorage.DeleteResponse;
 import com.simplecachestorage.store.KeyValueStore;
+
 import io.grpc.stub.StreamObserver;
 
 public class KeyValueStoreServer extends KeyValueStoreGrpc.KeyValueStoreImplBase {
@@ -23,8 +24,8 @@ public class KeyValueStoreServer extends KeyValueStoreGrpc.KeyValueStoreImplBase
     @Override
     public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
         String value = store.get(request.getKey());
-        boolean found = (value != null);
-        responseObserver.onNext(GetResponse.newBuilder().setValue(value == null ? "" : value).setFound(found).build());
+        Boolean found = value != null;
+        responseObserver.onNext(GetResponse.newBuilder().setValue(found ? value : "").setFound(found).build());
         responseObserver.onCompleted();
     }
 

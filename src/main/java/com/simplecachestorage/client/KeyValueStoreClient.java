@@ -7,6 +7,7 @@ import com.simplecachestorage.DeleteRequest;
 import com.simplecachestorage.GetRequest;
 import com.simplecachestorage.GetResponse;
 import com.simplecachestorage.KeyValueStoreGrpc;
+import com.simplecachestorage.Main;
 import com.simplecachestorage.PutRequest;
 
 import io.grpc.ManagedChannel;
@@ -19,7 +20,7 @@ public class KeyValueStoreClient implements AutoCloseable {
     private volatile boolean isRunning = true;
 
     public KeyValueStoreClient() {
-        channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        channel = ManagedChannelBuilder.forAddress(Main.HOST, Main.PORT)
                 .usePlaintext()
                 .build();
         client = KeyValueStoreGrpc.newBlockingStub(channel);
@@ -27,39 +28,34 @@ public class KeyValueStoreClient implements AutoCloseable {
     }
 
     public void start() {
-        System.out.println("Welcome to KeyValueStore Client!");
-        System.out.println("Available commands: put <key> <value> [ttl], get <key>, delete <key>, help, exit");
+        System.out.format("You are connected to Store on host '%s' and port '%d'\n", Main.HOST, Main.PORT);
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::close));
 
         while (isRunning && scanner.hasNextLine()) {
-            System.out.print("> ");
             String line = scanner.nextLine().trim();
             String[] parts = line.split("\\s+");
 
+            String operation = parts[0].toLowerCase();
+            String key = parts.length > 1 ? parts[1] : "no key";
+            String value = parts.length > 2 ? parts[2] : "no value";
+            long ttl = parts.length > 3 ? Long.parseLong(parts[3]) : 0;
+
+            System.out.println(">");
+
             try {
-                switch (parts[0].toLowerCase()) {
+                switch (operation) {
+                    case "has" -> {
+                        has(key);
+                    }
                     case "put" -> {
-                        if (parts.length < 3) {
-                            System.out.println("Usage: put <key> <value> [ttl]");
-                            continue;
-                        }
-                        long ttl = parts.length > 3 ? Long.parseLong(parts[3]) : 0;
-                        put(parts[1], parts[2], ttl);
+                        put(key, value, ttl);
                     }
                     case "get" -> {
-                        if (parts.length != 2) {
-                            System.out.println("Usage: get <key>");
-                            continue;
-                        }
-                        get(parts[1]);
+                        get(key);
                     }
                     case "delete" -> {
-                        if (parts.length != 2) {
-                            System.out.println("Usage: delete <key>");
-                            continue;
-                        }
-                        delete(parts[1]);
+                        delete(key);
                     }
                     case "help" -> printHelp();
                     case "exit" -> {
@@ -73,6 +69,14 @@ public class KeyValueStoreClient implements AutoCloseable {
         }
     }
 
+    private void has(String key) {
+        GetRequest request = GetRequest.newBuilder()
+                .setKey(key)
+                .build();
+        GetResponse response = client.get(request);
+        System.out.println("Key is " + (response.getFound() ? "found" : "not found"));
+    }
+
     private void put(String key, String value, long ttl) {
         PutRequest request = PutRequest.newBuilder()
                 .setKey(key)
@@ -80,7 +84,7 @@ public class KeyValueStoreClient implements AutoCloseable {
                 .setTtl(ttl)
                 .build();
         client.put(request);
-        System.out.println("Value stored successfully");
+        System.out.println("Value is added to Store");
     }
 
     private void get(String key) {
@@ -89,9 +93,9 @@ public class KeyValueStoreClient implements AutoCloseable {
                 .build();
         GetResponse response = client.get(request);
         if (response.getFound()) {
-            System.out.println("Value: " + response.getValue());
+            System.out.println("Value is " + response.getValue());
         } else {
-            System.out.println("Key not found!");
+            System.out.println("Key is not found in Store");
         }
     }
 
@@ -100,16 +104,17 @@ public class KeyValueStoreClient implements AutoCloseable {
                 .setKey(key)
                 .build();
         client.delete(request);
-        System.out.println("Key deleted successfully");
+        System.out.println("Key is deleted from Store");
     }
 
     private void printHelp() {
         System.out.println("Available commands:");
-        System.out.println("  put <key> <value> [ttl] - Store a key-value pair");
-        System.out.println("  get <key> - Retrieve a value by key");
-        System.out.println("  delete <key> - Delete a key-value pair");
-        System.out.println("  help - Show this help message");
-        System.out.println("  exit - Exit the client");
+        System.out.println("has <key>");
+        System.out.println("put <key> <value> [ttl]");
+        System.out.println("get <key>");
+        System.out.println("delete <key>");
+        System.out.println("help");
+        System.out.println("exit");
     }
 
     @Override
